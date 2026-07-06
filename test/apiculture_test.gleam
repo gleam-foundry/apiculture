@@ -399,6 +399,107 @@ pub fn builder_with_custom_encoding_test() {
 }
 
 // ============================================================================
+// Imported Identifier Tests
+// ============================================================================
+
+pub fn key_from_bytes_with_hex_encoding_test() {
+  let assert Ok(k) =
+    key.new()
+    |> key.with_encoding(encoding.hex_lower())
+    |> key.without_checksum
+    |> key.from_bytes(<<0xDE, 0xAD, 0xBE, 0xEF>>)
+
+  key.value(k) |> should.equal("DEADBEEF")
+  key.bytes(k) |> should.equal(<<0xDE, 0xAD, 0xBE, 0xEF>>)
+}
+
+pub fn key_from_uuid_with_hex_encoding_test() {
+  let uuid = "019f3663-9b00-7a38-9427-16621a576830"
+  let assert Ok(k) =
+    key.new()
+    |> key.with_encoding(encoding.hex_lower())
+    |> key.without_checksum
+    |> key.from_uuid_with(uuid)
+
+  key.value(k) |> should.equal("019F36639B007A38942716621A576830")
+  key.bytes(k)
+  |> should.equal(<<
+    0x01,
+    0x9F,
+    0x36,
+    0x63,
+    0x9B,
+    0x00,
+    0x7A,
+    0x38,
+    0x94,
+    0x27,
+    0x16,
+    0x62,
+    0x1A,
+    0x57,
+    0x68,
+    0x30,
+  >>)
+}
+
+pub fn key_from_uuid_default_format_test() {
+  let uuid = "019f3663-9b00-7a38-9427-16621a576830"
+  let assert Ok(k) = key.from_uuid(uuid)
+
+  bit_array.byte_size(key.bytes(k)) |> should.equal(16)
+  key.value(k) |> string.length |> fn(len) { len > 20 } |> should.be_true
+}
+
+pub fn key_from_ulid_with_hex_encoding_test() {
+  let ulid = "01KWV69C49DSTWZBJ1SAC42E7V"
+  let assert Ok(k) =
+    key.new()
+    |> key.with_encoding(encoding.hex_lower())
+    |> key.without_checksum
+    |> key.from_ulid_with(ulid)
+
+  key.value(k) |> should.equal("019F3664B0896E75CFAE41CA984138FB")
+  key.bytes(k)
+  |> should.equal(<<
+    0x01,
+    0x9F,
+    0x36,
+    0x64,
+    0xB0,
+    0x89,
+    0x6E,
+    0x75,
+    0xCF,
+    0xAE,
+    0x41,
+    0xCA,
+    0x98,
+    0x41,
+    0x38,
+    0xFB,
+  >>)
+}
+
+pub fn key_from_ulid_default_format_test() {
+  let ulid = "01KWV69C49DSTWZBJ1SAC42E7V"
+  let assert Ok(k) = key.from_ulid(ulid)
+
+  bit_array.byte_size(key.bytes(k)) |> should.equal(16)
+  key.value(k) |> string.length |> fn(len) { len > 20 } |> should.be_true
+}
+
+pub fn key_from_uuid_malformed_input_test() {
+  key.from_uuid("not-a-uuid") |> should.equal(Error(error.MalformedInput))
+}
+
+pub fn key_from_ulid_malformed_input_test() {
+  key.from_ulid("not-a-ulid") |> should.equal(Error(error.MalformedInput))
+  key.from_ulid("8ZKWV69C49DSTWZBJ1SAC42E7V")
+  |> should.equal(Error(error.MalformedInput))
+}
+
+// ============================================================================
 // Error Type Tests
 // ============================================================================
 

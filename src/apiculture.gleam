@@ -96,6 +96,35 @@ pub fn key_generate(config: KeyConfig) -> Result(Key, error.Error) {
   key.generate(config)
 }
 
+pub fn key_from_bytes(
+  config: KeyConfig,
+  bytes: BitArray,
+) -> Result(Key, error.Error) {
+  key.from_bytes(config, bytes)
+}
+
+pub fn key_from_uuid(input: String) -> Result(Key, error.Error) {
+  key.from_uuid(input)
+}
+
+pub fn key_from_uuid_with(
+  config: KeyConfig,
+  input: String,
+) -> Result(Key, error.Error) {
+  key.from_uuid_with(config, input)
+}
+
+pub fn key_from_ulid(input: String) -> Result(Key, error.Error) {
+  key.from_ulid(input)
+}
+
+pub fn key_from_ulid_with(
+  config: KeyConfig,
+  input: String,
+) -> Result(Key, error.Error) {
+  key.from_ulid_with(config, input)
+}
+
 pub fn key_value(k: Key) -> String {
   key.value(k)
 }

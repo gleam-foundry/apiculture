@@ -117,6 +117,20 @@ let assert Ok(key) =
   |> ab.key_generate
 ```
 
+## Import Existing Identifiers
+
+Convert existing UUIDs or ULIDs into API-key formatted values:
+
+```gleam
+import apiculture as ab
+
+let assert Ok(uuid_key) =
+  ab.key_from_uuid("019f3663-9b00-7a38-9427-16621a576830")
+
+let assert Ok(ulid_key) =
+  ab.key_from_ulid("01KWV69C49DSTWZBJ1SAC42E7V")
+```
+
 ## Versioning Policy
 
 - **0.1.x**: Initial development period. Breaking API changes may occur.
