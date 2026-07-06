@@ -1,0 +1,16 @@
+# Build artifacts
+build/
+*.beam
+*.erl
+*.app
+
+# Dependencies
+manifest.toml
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store

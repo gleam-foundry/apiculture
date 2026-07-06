@@ -1,0 +1,15 @@
+name = "apiculture"
+version = "0.1.0"
+
+description = "Cryptographically secure random key generation for Gleam"
+licences = ["MIT"]
+repository = { type = "github", user = "gleam-foundry", repo = "apiculture" }
+
+[dependencies]
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+gleam_crypto = ">= 1.6.0 and < 2.0.0"
+yabase = ">= 0.22.0 and < 1.0.0"
+crc32 = ">= 0.1.0 and < 1.0.0"
+
+[dev_dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
