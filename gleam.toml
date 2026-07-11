@@ -1,5 +1,5 @@
 name = "apiculture"
-version = "0.2.0"
+version = "0.3.0"
 
 description = "Cryptographically secure random key generation for Gleam"
 licences = ["MIT"]
