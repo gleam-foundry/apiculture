@@ -1,4 +1,8 @@
-// Alphabet representation and validation
+//// Alphabet representation and validation.
+////
+//// An alphabet is a validated set of graphemes for direct random character
+//// sampling. It is deliberately separate from an encoding, which transforms
+//// arbitrary bytes into text.
 
 import apiculture/error.{type Error}
 import gleam/list

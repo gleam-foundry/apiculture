@@ -1,13 +1,14 @@
-// Encoding abstraction
-//
-// A thin wrapper around yabase for base encoding/decoding.
-// This module provides a consistent API for apiculture's key generation.
+//// Encoding abstraction.
+////
+//// This module is a thin wrapper around yabase for encoding and decoding
+//// bytes. It normalizes decoding failures to apiculture's `Error` type and
+//// records whether an encoding uses padding.
 
 import apiculture/error.{type Error}
 import yabase/core/encoding as ybase
 import yabase/core/error as yerror
 
-// Wrapper type that pairs yabase's Encoding with apiculture-specific info
+/// A byte-to-text encoding and its padding behavior.
 pub type Encoding {
   Encoding(inner: ybase.Encoding, uses_padding: Bool)
 }

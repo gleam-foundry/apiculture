@@ -3,6 +3,7 @@
 //// These errors indicate failure conditions when generating keys,
 //// creating alphabets, or encoding/decoding data.
 
+/// Errors returned by apiculture operations.
 pub type Error {
   /// The alphabet is empty.
   EmptyAlphabet

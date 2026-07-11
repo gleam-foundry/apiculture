@@ -1,7 +1,8 @@
-// Secure randomness abstraction
-//
-// This module provides cryptographically secure random generation
-// for both Erlang and JavaScript targets.
+//// Secure randomness abstraction.
+////
+//// This module provides cryptographically secure random generation for Erlang
+//// and JavaScript targets. It exposes both byte generation and unbiased direct
+//// alphabet sampling.
 
 import apiculture/alphabet.{type Alphabet}
 import apiculture/error.{type Error}

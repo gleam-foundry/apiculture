@@ -1,3 +1,4 @@
+import apiculture as ab
 import apiculture/alphabet
 import apiculture/alphabets
 import apiculture/checksum
@@ -7,6 +8,7 @@ import apiculture/error
 import apiculture/key
 import gleam/bit_array
 import gleam/list
+import gleam/option.{None, Some}
 import gleam/string
 import gleeunit
 import gleeunit/should
@@ -122,6 +124,114 @@ pub fn key_generate_base58_test() {
 
 pub fn key_generate_error_test() {
   key.new() |> key.generate |> should.be_error
+}
+
+pub fn key_config_is_ready_test() {
+  key.new() |> key.is_ready |> should.equal(False)
+
+  key.new()
+  |> key.with_random_bytes(16)
+  |> key.with_encoding(encoding.base62())
+  |> key.is_ready
+  |> should.equal(True)
+
+  key.new()
+  |> key.with_random_chars(16)
+  |> key.with_alphabet(alphabets.base62())
+  |> key.is_ready
+  |> should.equal(True)
+}
+
+pub fn v03_default_key_api_test() {
+  let assert Ok(k) = ab.key_new()
+
+  ab.key_prefix_value(k) |> should.equal(Some("sk"))
+  ab.key_has_prefix(k) |> should.equal(True)
+  ab.key_has_checksum(k) |> should.equal(True)
+  ab.key_checksum_name(k) |> should.equal(Some("crc32"))
+  ab.key_checksum_byte_count(k) |> should.equal(4)
+  ab.key_verify_checksum(k) |> should.equal(True)
+}
+
+pub fn v03_default_key_parse_test() {
+  let assert Ok(generated) = ab.key_new()
+  let assert Ok(parsed) = generated |> ab.key_to_string |> ab.key_parse
+
+  ab.key_to_string(parsed) |> should.equal(ab.key_to_string(generated))
+  ab.key_content_bytes(parsed) |> should.equal(ab.key_content_bytes(generated))
+}
+
+pub fn v03_default_key_parse_malformed_test() {
+  ab.key_parse("sk_invalid_crc32_invalid")
+  |> should.be_error
+}
+
+pub fn v03_custom_format_parse_test() {
+  let assert Ok(generated) =
+    ab.key_new_as_config()
+    |> ab.key_disable_prefix
+    |> ab.key_disable_checksum_name
+    |> ab.key_generate
+
+  let format =
+    ab.key_default_format()
+    |> ab.key_format_without_prefix
+    |> ab.key_format_without_checksum_name
+
+  let assert Ok(parsed) =
+    generated
+    |> ab.key_to_string
+    |> ab.key_parse_with_format(format)
+
+  ab.key_to_string(parsed) |> should.equal(ab.key_to_string(generated))
+}
+
+pub fn v03_direct_alphabet_override_test() {
+  let assert Ok(k) =
+    ab.key_new_as_config()
+    |> ab.key_with_random_chars(12)
+    |> ab.key_with_alphabet(alphabets.base58())
+    |> ab.key_generate
+
+  ab.key_has_prefix(k) |> should.equal(True)
+  ab.key_verify_checksum(k) |> should.equal(True)
+}
+
+pub fn v03_key_string_and_inspection_test() {
+  let assert Ok(value) = ab.key_new_as_string()
+  let assert Ok(k) = ab.key_parse(value)
+
+  ab.key_to_string(k) |> should.equal(value)
+  ab.key_separator_value(k) |> should.equal(Some("_"))
+  ab.key_content_byte_count(k) |> should.equal(16)
+  ab.key_content_char_count(k)
+  |> should.equal(string.length(ab.key_content_value(k)))
+  ab.key_checksum_value(k) |> should.be_some
+  let checksum_char_count = case ab.key_checksum_value(k) {
+    Some(value) -> Some(string.length(value))
+    _ -> None
+  }
+  ab.key_checksum_char_count(k) |> should.equal(checksum_char_count)
+}
+
+pub fn v03_configurable_uuid_and_ulid_import_test() {
+  let config =
+    ab.key_new_as_config()
+    |> ab.key_disable_prefix
+    |> ab.key_with_encoding(ab.hex_lower())
+    |> ab.key_disable_checksum
+
+  let assert Ok(uuid_key) =
+    ab.key_from_uuid_with_config(config, "019f3663-9b00-7a38-9427-16621a576830")
+  let assert Ok(ulid_key) =
+    ab.key_from_ulid_with_config(config, "01KWV69C49DSTWZBJ1SAC42E7V")
+
+  ab.key_to_string(uuid_key)
+  |> should.equal("019F36639B007A38942716621A576830")
+  ab.key_to_string(ulid_key)
+  |> should.equal("019F3664B0896E75CFAE41CA984138FB")
+  ab.key_has_prefix(uuid_key) |> should.equal(False)
+  ab.key_has_checksum(ulid_key) |> should.equal(False)
 }
 
 pub fn key_generate_zero_bytes_error_test() {
@@ -365,8 +475,8 @@ pub fn default_format_structure_test() {
   let prefix = string.slice(v, 0, 6)
   prefix |> should.equal("token_")
 
-  // The total length should be prefix(6) + _(1) + base62(22-23) + checksum(6) = ~35 chars
-  let is_reasonable_length = total_len > 30 && total_len < 40
+  // The default layout includes `_crc32_` before the checksum.
+  let is_reasonable_length = total_len > 35 && total_len < 50
   is_reasonable_length |> should.be_true
 }
 
@@ -448,6 +558,9 @@ pub fn key_from_uuid_default_format_test() {
   let assert Ok(k) = key.from_uuid(uuid)
 
   bit_array.byte_size(key.bytes(k)) |> should.equal(16)
+  string.slice(key.value(k), 0, 3) |> should.equal("sk_")
+  key.sections(k).prefix |> should.equal(Some("sk"))
+  key.checksum_bytes(k) |> should.equal(Some(checksum.crc32(key.bytes(k))))
   key.value(k) |> string.length |> fn(len) { len > 20 } |> should.be_true
 }
 
@@ -486,7 +599,80 @@ pub fn key_from_ulid_default_format_test() {
   let assert Ok(k) = key.from_ulid(ulid)
 
   bit_array.byte_size(key.bytes(k)) |> should.equal(16)
+  string.slice(key.value(k), 0, 3) |> should.equal("sk_")
+  key.sections(k).prefix |> should.equal(Some("sk"))
+  key.checksum_bytes(k) |> should.equal(Some(checksum.crc32(key.bytes(k))))
   key.value(k) |> string.length |> fn(len) { len > 20 } |> should.be_true
+}
+
+pub fn bytes_from_uuid_test() {
+  let uuid = "019f3663-9b00-7a38-9427-16621a576830"
+  let assert Ok(bytes) = key.bytes_from_uuid(uuid)
+
+  bytes
+  |> should.equal(<<
+    0x01,
+    0x9F,
+    0x36,
+    0x63,
+    0x9B,
+    0x00,
+    0x7A,
+    0x38,
+    0x94,
+    0x27,
+    0x16,
+    0x62,
+    0x1A,
+    0x57,
+    0x68,
+    0x30,
+  >>)
+}
+
+pub fn bytes_from_ulid_test() {
+  let ulid = "01KWV69C49DSTWZBJ1SAC42E7V"
+  let assert Ok(bytes) = key.bytes_from_ulid(ulid)
+
+  bytes
+  |> should.equal(<<
+    0x01,
+    0x9F,
+    0x36,
+    0x64,
+    0xB0,
+    0x89,
+    0x6E,
+    0x75,
+    0xCF,
+    0xAE,
+    0x41,
+    0xCA,
+    0x98,
+    0x41,
+    0x38,
+    0xFB,
+  >>)
+}
+
+pub fn key_checksum_metadata_test() {
+  let source = <<0xDE, 0xAD, 0xBE, 0xEF>>
+  let expected_checksum = checksum.crc32(source)
+  let assert Ok(k) =
+    key.new()
+    |> key.with_encoding(encoding.hex_lower())
+    |> key.with_checksum(checksum.crc32_checksum())
+    |> key.with_checksum_bytes(4)
+    |> key.from_bytes(source)
+
+  key.content_value(k) |> should.equal("DEADBEEF")
+  key.content_byte_count(k) |> should.equal(4)
+  key.checksum_value(k)
+  |> should.equal(
+    Some(encoding.encode(encoding.hex_lower(), expected_checksum)),
+  )
+  key.checksum_bytes(k) |> should.equal(Some(expected_checksum))
+  key.verify_checksum(k, checksum.crc32_checksum()) |> should.equal(True)
 }
 
 pub fn key_from_uuid_malformed_input_test() {

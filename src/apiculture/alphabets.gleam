@@ -1,9 +1,8 @@
-// Built-in alphabets for key generation
-//
-// These alphabets serve different purposes:
-// - Some are for direct character sampling (e.g., base36, base58)
-// - Some are standard encodings (e.g., base32, base64)
-// - The distinction matters: an alphabet is a repertoire, an encoding transforms bytes
+//// Built-in alphabets for key generation.
+////
+//// These alphabets are useful with direct character sampling. The matching
+//// `apiculture/encoding` functions instead transform arbitrary bytes into
+//// text; the distinction matters when choosing a generation method.
 
 import apiculture/alphabet.{type Alphabet}
 
